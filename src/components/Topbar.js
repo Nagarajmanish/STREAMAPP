@@ -36,8 +36,8 @@ function Topbar() {
           <h2 className='event'>Create Event</h2>
         </Link>
       </div>
-
-      <input className="search-bar" type="text" placeholder="Search" />
+{/* 
+      <input className="search-bar" type="text" placeholder="Search" /> */}
 
       <div className="auth-buttons">
         {userName ? (
