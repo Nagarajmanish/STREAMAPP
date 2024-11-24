@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './BrowsePage.css';
 
@@ -8,11 +8,11 @@ const BrowsePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('');
-  const [userName, setUserName] = useState(''); // Track username in state
+  const [searchTerm, setSearchTerm] = useState(''); // New state for search term
+  const [userName, setUserName] = useState('');
 
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
 
-  // Function to read cookies
   const getCookie = (name) => {
     const cookieArr = document.cookie.split(';');
     for (let cookie of cookieArr) {
@@ -26,7 +26,7 @@ const BrowsePage = () => {
 
   useEffect(() => {
     const usernameFromCookie = getCookie('username');
-    setUserName(usernameFromCookie || ''); // Default to empty string if not found
+    setUserName(usernameFromCookie || '');
   }, []);
 
   const fetchEvents = async () => {
@@ -53,7 +53,7 @@ const BrowsePage = () => {
   };
 
   const handleEdit = (id) => {
-    navigate(`/edit-event/${id}`); // Navigate to the EditEvent page with the event ID
+    navigate(`/edit-event/${id}`);
   };
 
   useEffect(() => {
@@ -75,21 +75,40 @@ const BrowsePage = () => {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
 
-  const filteredEvents = category
-    ? events.filter((event) => event.eventType?.toLowerCase() === category.toLowerCase())
-    : events;
+  // Filter events by category and search term
+  const filteredEvents = events
+    .filter((event) =>
+      category ? event.eventType?.toLowerCase() === category.toLowerCase() : true
+    )
+    .filter((event) =>
+      searchTerm
+        ? event.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.description.toLowerCase().includes(searchTerm.toLowerCase())
+        : true
+    );
 
   return (
     <div>
       <h2>Event Listings</h2>
-      <div className="category-buttons">
-        <button onClick={() => setCategory('')}>All Events</button>
-        <button onClick={() => setCategory('public')}>Public</button>
-        <button onClick={() => setCategory('private')}>Private</button>
+      <div className="search-box">
+          <input
+            type="text"
+            placeholder="Search events..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      <div className="filters">
+        <div className="category-buttons">
+          <button onClick={() => setCategory('')}>All Events</button>
+          <button onClick={() => setCategory('public')}>Public</button>
+          <button onClick={() => setCategory('private')}>Private</button>
+        </div>
+       
       </div>
       <div className="event-container">
         {filteredEvents.length === 0 ? (
-          <div>No events available for this category.</div>
+          <div>No events match your search criteria.</div>
         ) : (
           filteredEvents.map((event) => (
             <div key={event._id} className="event-card">
