@@ -66,100 +66,119 @@ const EditEvent = () => {
 
   return (
     <div className="edit-event-form">
-      <h3>Edit Event</h3>
+      <h1>Edit Event</h1>
       <form onSubmit={handleSubmit}>
+
         <label>
           Event Name:
-          <input
+        </label>
+        <input
             type="text"
             name="eventName"
             value={event.eventName || ''}
             onChange={handleChange}
           />
-        </label>
+        
+        
         <label>
           Description:
-          <textarea
+        </label>
+        <textarea
             name="description"
             value={event.description || ''}
             onChange={handleChange}
           />
-        </label>
-        <label>
+        
+          <label>
           Location:
-          <input
+        </label>
+        <input
             type="text"
             name="location"
             value={event.location || ''}
             onChange={handleChange}
           />
-        </label>
+
         <label>
           Start Date:
-          <input
+        </label>
+        <input
             type="date"
             name="startDate"
             value={event.startDate ? event.startDate.split('T')[0] : ''}
             onChange={handleChange}
           />
-        </label>
+
         <label>
           End Date:
-          <input
+        </label>
+        <input
             type="date"
             name="endDate"
             value={event.endDate ? event.endDate.split('T')[0] : ''}
             onChange={handleChange}
           />
-        </label>
+
         <label>
           Start Time:
-          <input
+        </label>
+        <input
             type="time"
             name="startTime"
             value={event.startTime || ''}
             onChange={handleChange}
           />
-        </label>
+
         <label>
           End Time:
-          <input
+        </label>
+        <input
             type="time"
             name="endTime"
             value={event.endTime || ''}
             onChange={handleChange}
           />
-        </label>
+
         <label>
           Event Type:
-          <select name="eventType" value={event.eventType || ''} onChange={handleChange}>
+        </label>
+        <select name="eventType" value={event.eventType || ''} onChange={handleChange}>
             <option value="Public">Public</option>
             <option value="Private">Private</option>
           </select>
-        </label>
-        <label>
-          Tickets Required:
-          <input
-            type="checkbox"
-            name="ticketsRequired"
-            checked={event.ticketsRequired || false}
-            onChange={(e) =>
-              setEvent((prevEvent) => ({
-                ...prevEvent,
-                ticketsRequired: e.target.checked,
-              }))
-            }
-          />
-        </label>
+
+          
+<div className="toggle-switch">
+<label>
+  Tickets Required:
+</label>
+  <input
+    type="checkbox"
+    id="ticketsRequired"
+    name="ticketsRequired"
+    checked={event.ticketsRequired || false}
+    onChange={(e) =>
+      setEvent((prevEvent) => ({
+        ...prevEvent,
+        ticketsRequired: e.target.checked,
+      }))
+    }
+  />
+  <label htmlFor="ticketsRequired" className="switch-label"></label>
+  <span>{event.ticketsRequired ? 'Yes' : 'No'}</span>
+</div>
+
+
         <label>
           Max Capacity:
-          <input
+        </label>
+        <input
             type="number"
             name="maxCapacity"
             value={event.maxCapacity || ''}
             onChange={handleChange}
           />
-        </label>
+          
         <button type="submit">Save Changes</button>
         <button type="button" onClick={() => navigate('/browse')}>
           Cancel
