@@ -1,120 +1,96 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import './BrowsePage.css';
 
 const BrowsePage = () => {
-  const [streams, setStreams] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('');
 
-  const fetchLiveStreams = async () => {
-    const clientId = 'fbd0jyq0b40dam94c23f6qv351p4b9'; // Your actual Twitch Client ID
-    const accessToken = 'w8th4xxfo9lbfxlebtxpocotxwm8h3'; // Your actual OAuth token
-  
+  const getCookie = (name) => {
+    const cookieArr = document.cookie.split(';');
+    for (let cookie of cookieArr) {
+      const [cookieName, cookieValue] = cookie.trim().split('=');
+      if (cookieName === name) return decodeURIComponent(cookieValue);
+    }
+    return null;
+  };
+
+  const userName = getCookie('username');
+  const token = getCookie('token');
+
+  const fetchEvents = async () => {
     try {
-      const response = await fetch('https://api.twitch.tv/helix/streams?first=100', {
-        method: 'GET',
-        headers: {
-          'Client-ID': clientId,
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to fetch live streams');
-      }
-  
-      const data = await response.json();
-      console.log('API Response:', data); // Log full API response for inspection
-      return data.data; // This gives an array of live streams
+      const response = await axios.get('http://localhost:5000/api/events');
+      return response.data;
     } catch (error) {
-      console.error('Error fetching live streams:', error);
-      return [];
+      console.error('Error fetching events:', error);
+      throw error;
     }
   };
-  
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/events/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert('Event deleted!');
+      setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id)); // Optimistic update
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete event!');
+    }
+  };
+
   useEffect(() => {
-    const loadStreams = async () => {
+    const loadEvents = async () => {
       setLoading(true);
       try {
-        const liveStreams = await fetchLiveStreams();
-        console.log('Fetched Live Streams:', liveStreams);
-        setStreams(liveStreams);
+        const fetchedEvents = await fetchEvents();
+        setEvents(fetchedEvents);
       } catch (error) {
-        setError(error.message);
+        setError('Failed to load events.');
       } finally {
         setLoading(false);
       }
     };
 
-    loadStreams();
+    loadEvents();
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
-  const filteredStreams = category === 'games'
-    ? streams.filter((stream) => stream.game_name) // Filter streams that have a game name for "Games"
-    : category
-    ? streams.filter((stream) => {
-        const gameName = stream.game_name ? stream.game_name.toLowerCase() : '';
-        return (
-          // (category === 'music' && 
-          //   (gameName.includes('music') || 
-          //   gameName.includes('band') || 
-          //   gameName.includes('live') || 
-          //   gameName.includes('performance') || 
-          //   gameName.includes('concert') || 
-          //   gameName.includes('dj') || 
-          //   gameName.includes('just chatting')))          
-          //   ||
-          (category === 'irl' && gameName.includes('just chatting')) ||
-          (category === 'creative' && (gameName.includes('creative') || 
-          gameName.includes('art') || gameName.includes('craft'))) || 
-          (category === 'esports' && (gameName.includes('esports') || 
-          gameName.includes('competitive') || gameName.includes('tournament') ||
-            gameName.includes('league') || 
-            gameName.includes('valorant'))) 
-        );
-      })
-    : streams; // Default to showing all streams if no category is selected
-
-  const width = 250; // Set your desired width
-  const height = 230; // Set your desired height
+  const filteredEvents = category
+    ? events.filter((event) => event.eventType?.toLowerCase() === category.toLowerCase())
+    : events;
 
   return (
     <div>
-      <h2>Stream Listings</h2>
+      <h2>Event Listings</h2>
 
       <div className="category-buttons">
-        <button onClick={() => setCategory('')}>Top Recommendations</button>
-        <button onClick={() => setCategory('irl')}>IRL</button>
-        <button onClick={() => setCategory('creative')}>Creative</button>
-        <button onClick={() => setCategory('esports')}>Esports</button>
-        <button onClick={() => setCategory('games')}>Games</button>
-        {/* <button onClick={() => setCategory('music')}>Music</button> */}
+        <button onClick={() => setCategory('')}>All Events</button>
+        <button onClick={() => setCategory('public')}>Public</button>
+        <button onClick={() => setCategory('private')}>Private</button>
       </div>
 
-      <div className="stream-container">
-        {filteredStreams.length === 0 ? (
-          <div>No streams available for this category.</div>
+      <div className="event-container">
+        {filteredEvents.length === 0 ? (
+          <div>No events available for this category.</div>
         ) : (
-          filteredStreams.map((stream) => (
-            <div key={stream.id} className="stream-card">
-              <h3>{stream.title}</h3>
-              {/* Replace width and height placeholders in the thumbnail URL */}
-              <img 
-                src={stream.thumbnail_url.replace('{width}', width).replace('{height}', height)} 
-                alt={stream.title} 
-                style={{ width: `${width}px`, height: `${height}px` }} 
-              />
-              <p>Viewers: {stream.viewer_count}</p>
-              <a href={`https://www.twitch.tv/${stream.user_name}`} target="_blank" rel="noopener noreferrer">Watch Now</a>
+          filteredEvents.map((event) => (
+            <div key={event._id} className="event-card">
+              <h3>{event.eventName}</h3>
+              <p>{event.description}</p>
+              <p>Location: {event.location || 'Online'}</p>
+              <p>Start: {new Date(event.startDate).toLocaleString() || 'TBD'} {event.startTime || ''}</p>
+              <p>End: {new Date(event.endDate).toLocaleString() || 'TBD'} {event.endTime || ''}</p>
+              <p>Creator: {event.creator?.name || 'Unknown'}</p>
+              {event.creator?.name === userName && (
+                <button onClick={() => handleDelete(event._id)}>Delete</button>
+              )}
             </div>
           ))
         )}

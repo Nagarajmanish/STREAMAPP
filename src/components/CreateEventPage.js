@@ -1,116 +1,173 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import Cookies from 'js-cookie';
 import './CreateEventPage.css';
 
 const CreateEventPage = () => {
-  const [eventType, setEventType] = useState('public');
-  const [locationType, setLocationType] = useState('physical');
-  const [capacity, setCapacity] = useState(50); // default max capacity set to 50
-  const [requireApproval, setRequireApproval] = useState(false); // state for toggle
+  // Form state variables
+  const [eventType, setEventType] = useState('Public'); // Event type: Public or Private
+  const [locationType, setLocationType] = useState('Physical'); // Location: Physical or Virtual
+  const [capacity, setCapacity] = useState(50); // Default max capacity set to 50
+  const [requireApproval, setRequireApproval] = useState(false); // Toggle for tickets required
+  const [eventName, setEventName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [description, setDescription] = useState('');
 
-  const handleLocationChange = (event) => {
-    setLocationType(event.target.value);
-  };
+  // Handlers for form input
+  const handleLocationChange = (event) => setLocationType(event.target.value);
 
   const handleCapacityChange = (event) => {
-    const value = event.target.value;
-    if (value <= 50) { // Restrict the max capacity to 50
-      setCapacity(value);
-    }
+    const value = Math.max(1, Math.min(100, event.target.value)); // Max capacity set to 100
+    setCapacity(value);
   };
 
-  const handleToggleChange = () => {
-    setRequireApproval(!requireApproval);
+  const handleToggleChange = () => setRequireApproval(!requireApproval);
+
+  // Form submission handler
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // Log all cookies to see if the token is present
+    console.log('Cookies:', document.cookie); // Check all cookies
+
+    const token = Cookies.get('token'); // Retrieve token from cookies
+    console.log('Token:', token); // Debugging line
+
+    if (!token) {
+      console.error('No token found. User might not be authenticated.');
+      return;
+    }
+
+    // Collect event data to match your schema
+    const eventData = {
+      eventName,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      location: locationType,
+      description,
+      eventType,
+      ticketsRequired: requireApproval,
+      maxCapacity: capacity,
+    };
+
+    // Post event data to backend
+    try {
+      const response = await axios.post('http://localhost:5000/api/events', eventData, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include token in Authorization header
+        },
+      });
+
+      console.log('Event created successfully:', response.data);
+
+      // Redirect after successful creation
+      window.location.href = '/browse'; // Adjust as needed for React Router
+    } catch (error) {
+      console.error('Error creating event:', error.response ? error.response.data : error.message);
+    }
   };
 
   return (
     <div className="create-event-page">
       <h2>Create Event</h2>
-      <form>
-        {/* Event Type: Public or Private */}
-        <label>Event Type:</label>
-        <select value={eventType} onChange={(e) => setEventType(e.target.value)}>
-          <option value="public">Public</option>
-          <option value="private">Private</option>
-        </select>
-
+      <form onSubmit={handleSubmit}>
+        
         {/* Event Name */}
         <label>Event Name:</label>
-        <input type="text" placeholder="Enter event name" required />
+        <input
+          type="text"
+          placeholder="Enter event name"
+          required
+          value={eventName}
+          onChange={(e) => setEventName(e.target.value)}
+        />
 
         {/* Start Date and Time */}
         <label>Start Date:</label>
-        <input type="date" required />
-        
+        <input
+          type="date"
+          required
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+
         <label>Start Time:</label>
-        <input type="time" required />
+        <input
+          type="time"
+          required
+          value={startTime}
+          onChange={(e) => setStartTime(e.target.value)}
+        />
 
         {/* End Date and Time */}
         <label>End Date:</label>
-        <input type="date" required />
-        
-        <label>End Time:</label>
-        <input type="time" required />
+        <input
+          type="date"
+          required
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
 
-        {/* Event Location */}
+        <label>End Time:</label>
+        <input
+          type="time"
+          required
+          value={endTime}
+          onChange={(e) => setEndTime(e.target.value)}
+        />
+
+        {/* Location: Physical or Virtual */}
         <label>Event Location:</label>
         <select value={locationType} onChange={handleLocationChange}>
-          <option value="physical">Physical Location</option>
-          <option value="virtual">Virtual</option>
+          <option value="Physical">Physical</option>
+          <option value="Virtual">Virtual</option>
         </select>
-
-        {/* Conditionally show virtual options when "Virtual" is selected */}
-        {locationType === 'virtual' && (
-          <>
-            <label>Virtual Event Options:</label>
-            <select>
-              <option value="create_zoom">Create Zoom Meeting</option>
-              <option value="select_zoom">Select Existing Zoom Meeting</option>
-            </select>
-          </>
-        )}
 
         {/* Event Description */}
         <label>Description:</label>
-        <textarea placeholder="Enter description" rows="4" required></textarea>
+        <textarea
+          placeholder="Enter event description"
+          rows="4"
+          required
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        ></textarea>
 
-        {/* Event Options */}
-        <legend style={{color:"black", fontWeight:"bold"}}>Event Options:</legend>
-        <fieldset>
-          {/* Tickets */}
-          <div className='select'>
-          <label>Tickets:</label>
-          <select style={{marginLeft:"10px"}}>
-            <option value="free">Free</option>
-            <option value="paid">Paid (coming soon)</option>
-          </select>
-          </div>
+        {/* Event Type: Public or Private */}
+        <label>Event Type:</label>
+        <select value={eventType} onChange={(e) => setEventType(e.target.value)}>
+          <option value="Public">Public</option>
+          <option value="Private">Private</option>
+        </select>
 
-          {/* Require Approval with Toggle Switch */}
-          <div className='toggle-switch'>
-          <label>Require Approval:</label>
-            <input
-              type="checkbox"
-              id="requireApproval"
-              checked={requireApproval}
-              onChange={handleToggleChange}
-            />
-            <label htmlFor="requireApproval" className="switch-label"></label>
-            <span>{requireApproval ? 'Yes' : 'No'}</span> {/* Display On/Off */}
-          </div>
-
-          {/* Event Capacity */}
-          <div className='capacity'>
-          <label>Max Capacity (50 max):</label>
-          <input  style={{marginLeft:"10px"}}
-            type="number"
-            value={capacity}
-            onChange={handleCapacityChange}
-            min="1"
-            max="50"
-            required
+        {/* Tickets Required */}
+        <div className="toggle-switch">
+          <label>Require Tickets:</label>
+          <input
+            type="checkbox"
+            id="requireApproval"
+            checked={requireApproval}
+            onChange={handleToggleChange}
           />
-          </div>
-        </fieldset>
+          <label htmlFor="requireApproval" className="switch-label"></label>
+          <span>{requireApproval ? 'Yes' : 'No'}</span>
+        </div>
+
+        {/* Event Capacity */}
+        <label>Max Capacity (100 max):</label>
+        <input
+          type="number"
+          value={capacity}
+          onChange={handleCapacityChange}
+          min="1"
+          max="100"
+          required
+        />
 
         <button type="submit">Create Event</button>
       </form>
