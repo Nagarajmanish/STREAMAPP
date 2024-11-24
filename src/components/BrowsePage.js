@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import axios from 'axios';
 import './BrowsePage.css';
 
@@ -7,7 +8,11 @@ const BrowsePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('');
+  const [userName, setUserName] = useState(''); // Track username in state
 
+  const navigate = useNavigate(); // Initialize navigate
+
+  // Function to read cookies
   const getCookie = (name) => {
     const cookieArr = document.cookie.split(';');
     for (let cookie of cookieArr) {
@@ -17,8 +22,12 @@ const BrowsePage = () => {
     return null;
   };
 
-  const userName = getCookie('username');
   const token = getCookie('token');
+
+  useEffect(() => {
+    const usernameFromCookie = getCookie('username');
+    setUserName(usernameFromCookie || ''); // Default to empty string if not found
+  }, []);
 
   const fetchEvents = async () => {
     try {
@@ -36,11 +45,15 @@ const BrowsePage = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert('Event deleted!');
-      setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id)); // Optimistic update
+      setEvents((prevEvents) => prevEvents.filter((event) => event._id !== id));
     } catch (error) {
       console.error('Delete error:', error);
       alert('Failed to delete event!');
     }
+  };
+
+  const handleEdit = (id) => {
+    navigate(`/edit-event/${id}`); // Navigate to the EditEvent page with the event ID
   };
 
   useEffect(() => {
@@ -69,13 +82,11 @@ const BrowsePage = () => {
   return (
     <div>
       <h2>Event Listings</h2>
-
       <div className="category-buttons">
         <button onClick={() => setCategory('')}>All Events</button>
         <button onClick={() => setCategory('public')}>Public</button>
         <button onClick={() => setCategory('private')}>Private</button>
       </div>
-
       <div className="event-container">
         {filteredEvents.length === 0 ? (
           <div>No events available for this category.</div>
@@ -85,11 +96,14 @@ const BrowsePage = () => {
               <h3>{event.eventName}</h3>
               <p>{event.description}</p>
               <p>Location: {event.location || 'Online'}</p>
-              <p>Start: {new Date(event.startDate).toLocaleString() || 'TBD'} {event.startTime || ''}</p>
-              <p>End: {new Date(event.endDate).toLocaleString() || 'TBD'} {event.endTime || ''}</p>
+              <p>Start: {new Date(event.startDate).toLocaleString()} {event.startTime || ''}</p>
+              <p>End: {new Date(event.endDate).toLocaleString()} {event.endTime || ''}</p>
               <p>Creator: {event.creator?.name || 'Unknown'}</p>
               {event.creator?.name === userName && (
-                <button onClick={() => handleDelete(event._id)}>Delete</button>
+                <>
+                  <button onClick={() => handleDelete(event._id)}>Delete</button>
+                  <button onClick={() => handleEdit(event._id)}>Edit</button>
+                </>
               )}
             </div>
           ))

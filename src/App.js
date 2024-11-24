@@ -1,13 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Topbar from './components/Topbar';
-import LoginPage from './components/LoginPage'; 
-import SignUpPage from './components/SignUpPage'; 
+import LoginPage from './components/LoginPage';
+import SignUpPage from './components/SignUpPage';
 import Sidebar from './components/Sidebar';
 import MainPlayer from './components/MainPlayer';
 import LiveGrid from './components/LiveGrid';
 import BrowsePage from './components/BrowsePage';
 import CreateEventPage from './components/CreateEventPage';
+import EditEvent from './components/EditEvent';
 import StreamPlayer from './components/StreamPlayer';
 import './components/App.css';
 
@@ -15,35 +16,40 @@ function App() {
   return (
     <Router>
       <div className="app">
-        <Topbar /> {/* Conditionally shows Login/Signup or Username */}
+        <Topbar />
         <div className="content">
           <Sidebar />
           <div className="main-content">
             <Routes>
+              {/* Authentication Routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
 
-              {/* Home Page Route */}
+              {/* Home Page */}
               <Route
                 path="/"
                 element={
                   <>
-                    <MainPlayer />
-                    <LiveGrid />
+                    {/* <MainPlayer /> */}
+                    {/* <LiveGrid /> */}
+                    <BrowsePage />
                   </>
                 }
               />
 
-              {/* Browse Page Route */}
+              {/* Browse Events Page */}
               <Route path="/browse" element={<BrowsePage />} />
 
-              {/* Create Event Page Route */}
+              {/* Create Event Page */}
               <Route path="/create-event" element={<CreateEventPage />} />
 
-              {/* Stream Player Route */}
+              {/* Edit Event Page */}
+              <Route path="/edit-event/:id" element={<EditEvent />} />
+
+              {/* Stream Player Page */}
               <Route path="/watch/:id" element={<StreamPlayer />} />
 
-              {/* Redirect any unmatched route to the Home Page */}
+              {/* Fallback for unmatched routes */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
